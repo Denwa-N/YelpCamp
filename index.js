@@ -4,6 +4,7 @@ const path = require('path');
 const mongoose = require('mongoose');
 const methodOverride = require('method-override');
 const ejsMate = require('ejs-mate');
+const Joi = require('joi')
 const catchAsync = require('./utils/catchAsync');
 const ExpressError = require('./utils/ExpressError');
 const Campground = require('./models/campground');
@@ -54,8 +55,22 @@ app.get('/campgrounds/new', (req, res) => {
 
 // 新規登録処理のルートの定義
 app.post('/campgrounds', catchAsync(async (req, res) => {
-    // 画面外から不正データが登録できないように制御する
-    if (!req.body.campground) throw new ExpressError('不正なキャンプ場のデータです', 400);
+    // 登録データのスキーマバリデーション
+    const campgroundSchema = Joi.object({
+        campground: Joi.object({
+            title: Joi.string().required(),
+            price: Joi.number().required().min(0),
+            description: Joi.string().required(),
+            location: Joi.string().required(),
+            image: Joi.string().required()
+        }).required()
+    });
+    const result = campgroundSchema.validate(req.body);
+    if (result.error) {
+        const msg = result.error.details.map(detail => detail.message).join(',');
+        throw new ExpressError(msg, 400);
+    }
+    console.log(result);
 
     const campground = new Campground(req.body.campground);
     await campground.save();
