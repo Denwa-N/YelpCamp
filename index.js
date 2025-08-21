@@ -4,6 +4,8 @@ const path = require('path');
 const mongoose = require('mongoose');
 const methodOverride = require('method-override');
 const ejsMate = require('ejs-mate');
+const catchAsync = require('./utils/catchAsync');
+const ExpressError = require('./utils/ExpressError');
 const Campground = require('./models/campground');
 
 // Expressアプリのインスタンスの作成
@@ -40,10 +42,10 @@ app.get('/', (req,res) => {
 });
 
 // 一覧画面へのルートの定義
-app.get('/campgrounds', async (req, res) => {
+app.get('/campgrounds', catchAsync(async (req, res) => {
     const campgrounds = await Campground.find();
     res.render('campgrounds/index', { campgrounds });
-});
+}));
 
 // 新規登録画面へのルートの定義
 app.get('/campgrounds/new', (req, res) => {
@@ -51,36 +53,49 @@ app.get('/campgrounds/new', (req, res) => {
 });
 
 // 新規登録処理のルートの定義
-app.post('/campgrounds', async (req, res) => {
+app.post('/campgrounds', catchAsync(async (req, res) => {
+    // 画面外から不正データが登録できないように制御する
+    if (!req.body.campground) throw new ExpressError('不正なキャンプ場のデータです', 400);
+
     const campground = new Campground(req.body.campground);
     await campground.save();
     res.redirect(`/campgrounds/${campground._id}`);
-});
+}));
 
 // 詳細画面へのルートの定義
-app.get('/campgrounds/:id', async (req, res) => {
+app.get('/campgrounds/:id', catchAsync(async (req, res) => {
     const campground = await Campground.findById(req.params.id);
     res.render('campgrounds/show', { campground });
-});
+}));
 
 // 編集画面へのルートの定義
-app.get('/campgrounds/:id/edit', async (req, res) => {
+app.get('/campgrounds/:id/edit', catchAsync(async (req, res) => {
     const campground = await Campground.findById(req.params.id);
     res.render('campgrounds/edit', { campground });
-});
+}));
 
 // 編集処理のルートの定義
-app.put('/campgrounds/:id', async (req, res) => {
+app.put('/campgrounds/:id', catchAsync(async (req, res) => {
     const { id } = req.params;
     const campground = await Campground.findByIdAndUpdate(id, { ...req.body.campground });
     res.redirect(`/campgrounds/${campground._id}`);
-});
+}));
 
 // 削除処理のルートの定義
-app.delete('/campgrounds/:id', async (req, res) => {
+app.delete('/campgrounds/:id', catchAsync(async (req, res) => {
     const { id } = req.params;
     await Campground.findByIdAndDelete(id);
     res.redirect(`/campgrounds`);
+}));
+
+app.use((req, res, next) => {
+    next(new ExpressError('ページが見つかりませんでした', 404));
+});
+
+// カスタムのエラーハンドラ
+app.use((err, req, res, next) => {
+    const { statusCode = 500, message = '問題が発生しました' } = err;
+    res.status(statusCode).send(message);
 });
 
 // サーバの起動
