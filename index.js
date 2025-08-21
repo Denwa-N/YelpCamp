@@ -94,8 +94,11 @@ app.use((req, res, next) => {
 
 // カスタムのエラーハンドラ
 app.use((err, req, res, next) => {
-    const { statusCode = 500, message = '問題が発生しました' } = err;
-    res.status(statusCode).send(message);
+    const { statusCode = 500 } = err;
+    if(!err.message) {
+        err.message = '問題が発生しました';
+    }
+    res.status(statusCode).render('error', { err });
 });
 
 // サーバの起動
