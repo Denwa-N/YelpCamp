@@ -1,7 +1,7 @@
 // npmライブラリのインポート
 const mongoose = require('mongoose');
 
-const Schema = mongoose.Schema;
+const { Schema } = mongoose;
 
 // スキーマ(DBに格納するデータの形)の定義
 const campgroundSchema = new Schema({
@@ -9,7 +9,13 @@ const campgroundSchema = new Schema({
     image: String,
     price: Number,
     description: String,
-    location: String
+    location: String,
+    reviews: [
+        {
+            type: Schema.Types.ObjectId,
+            ref: 'Review'
+        }
+    ]
 });
 
 // モデル(DBを操作するための道具)の定義
