@@ -1,6 +1,9 @@
 // npmライブラリのインポート
 const mongoose = require('mongoose');
 
+// reviewのインポート
+const Review = require('./review');
+
 const { Schema } = mongoose;
 
 // スキーマ(DBに格納するデータの形)の定義
@@ -16,6 +19,16 @@ const campgroundSchema = new Schema({
             ref: 'Review'
         }
     ]
+});
+
+campgroundSchema.post('findOneAndDelete', async function(campground) {
+    if (campground) {
+        await Review.deleteMany({
+            _id: {
+                $in: campground.reviews
+            }
+        });
+    }
 });
 
 // モデル(DBを操作するための道具)の定義
