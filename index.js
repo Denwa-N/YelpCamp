@@ -4,7 +4,10 @@ const path = require('path');
 const mongoose = require('mongoose');
 const methodOverride = require('method-override');
 const ejsMate = require('ejs-mate');
+const session = require('express-session');
+
 const ExpressError = require('./utils/ExpressError');
+
 const campgroundRoutes = require('./routes/campgrounds');
 const reviewRoutes = require('./routes/reviews');
 
@@ -43,6 +46,18 @@ app.use(methodOverride('_method'));
 
 // 静的ファイルの提供
 app.use(express.static(path.join(__dirname, 'public')));
+
+// セッションの設定
+const sessionConfig = {
+    secret: 'mysecret',
+    resave: 'false',
+    saveUninitialized: true,
+    cookie: {
+        HttpOnly: true,
+        maxAge: 1000 * 60 * 60 * 24 * 7 // 有効期限
+    }
+}
+app.use(session(sessionConfig));
 
 // ホームページへのルートの定義
 app.get('/', (req,res) => {
