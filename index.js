@@ -5,7 +5,7 @@ const mongoose = require('mongoose');
 const methodOverride = require('method-override');
 const ejsMate = require('ejs-mate');
 const session = require('express-session');
-
+const flash = require('connect-flash');
 const ExpressError = require('./utils/ExpressError');
 
 const campgroundRoutes = require('./routes/campgrounds');
@@ -58,6 +58,16 @@ const sessionConfig = {
     }
 }
 app.use(session(sessionConfig));
+
+app.use(flash());
+
+app.use((req, res, next) => {
+    // 成功時のフラッシュ
+    res.locals.success = req.flash('success');
+    // 失敗時のフラッシュ
+    res.locals.error = req.flash('error');
+    next();
+})
 
 // ホームページへのルートの定義
 app.get('/', (req,res) => {

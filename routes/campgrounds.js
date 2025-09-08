@@ -33,18 +33,30 @@ router.get('/new', (req, res) => {
 router.post('/', validateCampground, catchAsync(async (req, res) => {
     const campground = new Campground(req.body.campground);
     await campground.save();
+    // 新しいキャンプ場を作成したときフラッシュを設定する
+    req.flash('success', '新しいキャンプ場を登録しました');
     res.redirect(`/campgrounds/${campground._id}`);
 }));
 
 // キャンプ場の詳細画面へのルートの定義
 router.get('/:id', catchAsync(async (req, res) => {
     const campground = await Campground.findById(req.params.id).populate('reviews');
+    // 存在しない or 削除済みのキャンプ場へアクセスしようとした際のエラー処理
+    if (!campground) {
+        req.flash('error', 'キャンプ場は見つかりませんでした');
+        return res.redirect('/campgrounds');
+    }
     res.render('campgrounds/show', { campground });
 }));
 
 // キャンプ場の編集画面へのルートの定義
 router.get('/:id/edit', catchAsync(async (req, res) => {
     const campground = await Campground.findById(req.params.id);
+    // 存在しない or 削除済みのキャンプ場へアクセスしようとした際のエラー処理
+    if (!campground) {
+        req.flash('error', 'キャンプ場は見つかりませんでした');
+        return res.redirect('/campgrounds');
+    }
     res.render('campgrounds/edit', { campground });
 }));
 
@@ -52,6 +64,8 @@ router.get('/:id/edit', catchAsync(async (req, res) => {
 router.put('/:id', validateCampground, catchAsync(async (req, res) => {
     const { id } = req.params;
     const campground = await Campground.findByIdAndUpdate(id, { ...req.body.campground });
+    // キャンプ場を更新したときのフラッシュを設定する
+    req.flash('success', 'キャンプ場を更新しました');    
     res.redirect(`/campgrounds/${campground._id}`);
 }));
 
@@ -59,6 +73,8 @@ router.put('/:id', validateCampground, catchAsync(async (req, res) => {
 router.delete('/:id', catchAsync(async (req, res) => {
     const { id } = req.params;
     await Campground.findByIdAndDelete(id);
+    // キャンプ場を削除したときフのラッシュを設定する
+    req.flash('success', 'キャンプ場を削除しました');  
     res.redirect(`/campgrounds`);
 }));
 
