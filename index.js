@@ -13,7 +13,12 @@ const app = express();
 
 // mongoDBへの接続
 mongoose.connect('mongodb://localhost:27017/yelp-camp',
-    { useNewUrlParser: true, useUnifiedTopology: true, useCreateIndex: true })
+    { 
+        useNewUrlParser: true,
+        useUnifiedTopology: true, 
+        useCreateIndex: true,
+        useFindAndModify: false
+     })
     .then(() => {
         console.log('MongoDBへの接続を確立しました');
     })
@@ -35,6 +40,9 @@ app.set('views', path.join(__dirname, 'views'));
 app.use(express.urlencoded({extended: true}));
 // HTMLフォームのPOSTとGET以外への対応
 app.use(methodOverride('_method'));
+
+// 静的ファイルの提供
+app.use(express.static(path.join(__dirname, 'public')));
 
 // ホームページへのルートの定義
 app.get('/', (req,res) => {
