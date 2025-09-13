@@ -1,15 +1,24 @@
-// フレームワーク、標準モジュール、ライブラリ、自作ファイルのインポート
+// フレームワーク、標準モジュール、ライブラリのインポート
 const express = require('express');
-const path = require('path');
-const mongoose = require('mongoose');
 const methodOverride = require('method-override');
 const ejsMate = require('ejs-mate');
 const session = require('express-session');
 const flash = require('connect-flash');
+const mongoose = require('mongoose');
+const path = require('path');
+const passport = require('passport');
+const LocalStrategy = require('passport-local');
+
+// 自作ファイルの読込
 const ExpressError = require('./utils/ExpressError');
 
+// ルーターの読込
 const campgroundRoutes = require('./routes/campgrounds');
 const reviewRoutes = require('./routes/reviews');
+const userRoutes = require('./routes/users');
+
+// モデルの読込
+const User = require('./models/user');
 
 // Expressアプリのインスタンスの作成
 const app = express();
@@ -59,8 +68,8 @@ const sessionConfig = {
 }
 app.use(session(sessionConfig));
 
+// フラッシュの設定
 app.use(flash());
-
 app.use((req, res, next) => {
     // 成功時のフラッシュ
     res.locals.success = req.flash('success');
@@ -69,16 +78,32 @@ app.use((req, res, next) => {
     next();
 })
 
+// パスポートの設定
+app.use(passport.initialize());
+app.use(passport.session());
+passport.use(new LocalStrategy(User.authenticate()));
+passport.serializeUser(User.serializeUser());
+passport.deserializeUser(User.deserializeUser());
+
 // ホームページへのルートの定義
 app.get('/', (req,res) => {
     res.render('home');
 });
+
+app.get('/fakeUser', async (req, res) => {
+    const user = new User({ email: 'hogegege@example.com', username: 'hogegege' });
+    const newUser = await User.register(user, 'mogegege');
+    res.send(newUser);
+})
 
 // キャンプ場関係のルーティング定義を読み込む
 app.use('/campgrounds', campgroundRoutes);
 
 // レビュー関係のルーティング定義を読み込む
 app.use('/campgrounds/:id/reviews', reviewRoutes);
+
+// ユーザー関係のルーティング定義を読み込む
+app.use('/', userRoutes);
 
 app.use((req, res, next) => {
     next(new ExpressError('ページが見つかりませんでした', 404));
