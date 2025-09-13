@@ -32,8 +32,19 @@ router.get('/login', (req, res) => {
 // ログイン処理へのルートの定義
 // ミドルウェアによる認証処理
 router.post('/login', passport.authenticate('local', { failureFlash: true, failureRedirect: '/login' }), (req, res) => {
-    req.flash('success', 'おかえりなさい')
+    req.flash('success', 'おかえりなさい');
     res.redirect('/campgrounds');
+});
+
+// ログアウト処理のルートの定義
+router.get('/logout', (req, res) => {
+    req.logout((err) => {
+        if (err) {
+            return next(err);
+        }
+        req.flash('success', 'ログアウトしました');
+        res.redirect('/campgrounds');
+    });
 });
 
 module.exports = router;
