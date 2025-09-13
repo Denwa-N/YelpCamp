@@ -2,6 +2,7 @@ const express = require('express');
 const passport = require('passport');
 const router = express.Router();
 const User = require('../models/user');
+const { storeReturnTo } = require('../middleware');
 
 // ユーザ登録へのルートの定義
 router.get('/register', (req, res) => {
@@ -9,14 +10,18 @@ router.get('/register', (req, res) => {
 });
 
 // ユーザ登録処理のルートの定義
-router.post('/register', async (req, res) => {
+router.post('/register', async (req, res, next) => {
     try {
         const { email, username, password } = req.body;
         const user = new User({ email, username });
         const registeredUser = await User.register(user, password);
-        console.log(registeredUser);
-        req.flash('success', 'Yelp Camp へようこそ');
-        res.redirect('/campgrounds')
+        req.login(registeredUser, err => {
+            if (err) {
+                return next(err);
+            }
+            req.flash('success', 'Yelp Camp へようこそ');
+            res.redirect('/campgrounds')
+        });
     }
     catch (e) {
         req.flash('error', e.message);
@@ -31,9 +36,13 @@ router.get('/login', (req, res) => {
 
 // ログイン処理へのルートの定義
 // ミドルウェアによる認証処理
-router.post('/login', passport.authenticate('local', { failureFlash: true, failureRedirect: '/login' }), (req, res) => {
+router.post('/login', storeReturnTo, passport.authenticate('local', { failureFlash: true, failureRedirect: '/login' }), (req, res) => {
+    // passport.authenticate内でreq.login()が実行されている
     req.flash('success', 'おかえりなさい');
-    res.redirect('/campgrounds');
+    // ログイン前に操作していた画面にリダイレクトする
+    const redirectUrl = res.locals.returnTo || '/campgrounds';
+    delete req.session.returnTo;
+    res.redirect(redirectUrl);
 });
 
 // ログアウト処理のルートの定義

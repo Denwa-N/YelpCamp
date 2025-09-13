@@ -70,13 +70,6 @@ app.use(session(sessionConfig));
 
 // フラッシュの設定
 app.use(flash());
-app.use((req, res, next) => {
-    // 成功時のフラッシュ
-    res.locals.success = req.flash('success');
-    // 失敗時のフラッシュ
-    res.locals.error = req.flash('error');
-    next();
-})
 
 // パスポートの設定
 app.use(passport.initialize());
@@ -84,6 +77,17 @@ app.use(passport.session());
 passport.use(new LocalStrategy(User.authenticate()));
 passport.serializeUser(User.serializeUser());
 passport.deserializeUser(User.deserializeUser());
+
+// ローカルズの設定
+app.use((req, res, next) => {
+    // ログインユーザーの情報
+    res.locals.currentUser = req.user;
+    // 成功時のフラッシュ
+    res.locals.success = req.flash('success');
+    // 失敗時のフラッシュ
+    res.locals.error = req.flash('error');
+    next();
+});
 
 // ホームページへのルートの定義
 app.get('/', (req,res) => {
