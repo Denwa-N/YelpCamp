@@ -1,3 +1,11 @@
+// 開発モードの場合は.envを読み込む
+if (process.env.NODE_ENV !== 'production') {
+    require('dotenv').config();
+}
+
+console.log(process.env.SECRET);
+console.log(process.env.API_KEY);
+
 // フレームワーク、標準モジュール、ライブラリのインポート
 const express = require('express');
 const methodOverride = require('method-override');

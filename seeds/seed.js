@@ -24,9 +24,18 @@ const seedDB = async () => {
             author: '68d0bbea0ce33c57efe474a2',
             location: `${cities[randomCityIndex].prefecture}${cities[randomCityIndex].city}`,
             title: `${sample(descriptors)}・${sample(places)}`,
-            image: `https://picsum.photos/400?random=${Math.random()}`,
             description: '湖畔に広がる自然豊かなキャンプ場です。四季折々の風景を楽しみながら、テント泊やバーベキューを満喫できます。清流での水遊びや星空観察も人気で、家族連れからソロキャンパーまで幅広く利用されています。施設内には炊事場やシャワーも完備され、快適にアウトドアを楽しめます。',
-            price
+            price,
+            images: [
+                {
+                url: 'https://res.cloudinary.com/do9xvc9wi/image/upload/v1764480065/YelpCamp/d9ig7nxulxurfyethprf.jpg',
+                filename: 'YelpCamp/d9ig7nxulxurfyethprf'
+                },
+                {
+                url: 'https://res.cloudinary.com/do9xvc9wi/image/upload/v1764480066/YelpCamp/wcospk4x7edhdpncsnux.jpg',
+                filename: 'YelpCamp/wcospk4x7edhdpncsnux'
+                }
+            ]
         });
         await camp.save();
     }
