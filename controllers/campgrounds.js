@@ -1,5 +1,7 @@
 const Campground = require('../models/campground');
-const { cloudinary } = require('../cloudinary');
+const { cloudinary } = require('../cloudinary'); // 画像クラウド
+const maptilerClient = require("@maptiler/client"); // ジオコーディング
+maptilerClient.config.apiKey = process.env.MAPTILER_API_KEY;
 
 // キャンプ場一覧画面へのルーティング処理
 module.exports.index = async (req, res) => {
@@ -14,11 +16,19 @@ module.exports.renderNewForm = (req, res) => {
 
 // キャンプ場の新規登録処理のルーティング処理
 module.exports.createCampground = async (req, res) => {
+    // ジオデータの取得
+    const geoData = await maptilerClient.geocoding.forward(
+      req.body.campground.location,
+      { limit: 1 }
+    );
+
     const campground = new Campground(req.body.campground);
-    campground.images = req.files.map(f => ({ url: f.path, filename: f.filename }));
     campground.author = req.user._id;
+    campground.images = req.files.map(f => ({ url: f.path, filename: f.filename }));
+    campground.geometry = geoData.features[0].geometry;
     await campground.save();
     console.log(campground);
+
     // 新しいキャンプ場を作成したときフラッシュを設定する
     req.flash('success', '新しいキャンプ場を登録しました');
     res.redirect(`/campgrounds/${campground._id}`);

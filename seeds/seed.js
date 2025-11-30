@@ -1,3 +1,4 @@
+const { coordinates } = require('@maptiler/client');
 const Campground = require('../models/campground');
 const cities = require('./cities');
 const { descriptors, places } = require('./seedHelpers')
@@ -35,7 +36,14 @@ const seedDB = async () => {
                 url: 'https://res.cloudinary.com/do9xvc9wi/image/upload/v1764480066/YelpCamp/wcospk4x7edhdpncsnux.jpg',
                 filename: 'YelpCamp/wcospk4x7edhdpncsnux'
                 }
-            ]
+            ],
+            geometry: {
+                type: 'Point',
+                coordinates: [
+                    cities[randomCityIndex].longitude,
+                    cities[randomCityIndex].latitude
+                ]
+            }
         });
         await camp.save();
     }
