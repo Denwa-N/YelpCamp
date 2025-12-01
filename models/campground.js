@@ -1,9 +1,7 @@
 // npmライブラリのインポート
 const mongoose = require('mongoose');
-
 // reviewのインポート
 const Review = require('./review');
-
 const { Schema } = mongoose;
 
 // imageプロパティをスキーマとして取り出しバーチャルを追加する
@@ -14,6 +12,9 @@ const imageSchema = new Schema({
 imageSchema.virtual('thumbnail').get(function() {
     return this.url.replace('/upload', '/upload/w_200');
 });
+
+// バーチャルをJSON.stringifyで使用するためオプションをスキーマに渡す必要がある
+const opts = { toJSON: { virtuals: true } };
 
 // スキーマ(DBに格納するデータの形)の定義
 const campgroundSchema = new Schema({
@@ -43,6 +44,12 @@ const campgroundSchema = new Schema({
             ref: 'Review'
         }
     ]
+}, opts);
+
+// campgroundスキーマにバーチャルを追加する
+campgroundSchema.virtual('properties.popupMarkup').get(function () {
+    return `<strong><a href="/campgrounds/${this._id}">${this.title}</a></strong>
+    <p>${this.description.substring(0, 20)}...</p>`
 });
 
 campgroundSchema.post('findOneAndDelete', async function(campground) {
