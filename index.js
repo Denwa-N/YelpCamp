@@ -15,6 +15,8 @@ const flash = require('connect-flash');
 const mongoose = require('mongoose');
 const path = require('path');
 const passport = require('passport');
+const mongoSanitize = require('express-mongo-sanitize');
+const helmet = require('helmet');
 const LocalStrategy = require('passport-local');
 
 // 自作ファイルの読込
@@ -58,6 +60,7 @@ app.set('views', path.join(__dirname, 'views'));
 // ミドルウェアの定義
 // POSTのレスポンスを解析する方法の指定
 app.use(express.urlencoded({extended: true}));
+
 // HTMLフォームのPOSTとGET以外への対応
 app.use(methodOverride('_method'));
 
@@ -66,11 +69,13 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 // セッションの設定
 const sessionConfig = {
+    name: 'session',
     secret: 'mysecret',
     resave: 'false',
     saveUninitialized: true,
     cookie: {
         HttpOnly: true,
+        // secure: true, // https通信のみでcookieを保持する
         maxAge: 1000 * 60 * 60 * 24 * 7 // 有効期限
     }
 }
@@ -96,6 +101,44 @@ app.use((req, res, next) => {
     res.locals.error = req.flash('error');
     next();
 });
+
+// MongoDBインジェクション対策
+app.use(mongoSanitize());
+
+// helmetによるセキュリティミドルウェアの有効化
+app.use(helmet());
+// helmetのcontentSecurityPolicyの設定
+const scriptSrcUrls = [
+    'https://cdn.maptiler.com',
+    'https://cdn.jsdelivr.net'
+];
+const styleSrcUrls = [
+    'https://cdn.maptiler.com',
+    'https://cdn.jsdelivr.net'
+];
+const connectSrcUrls = [
+    'https://api.maptiler.com',
+    'https://*.tiles.mapbox.com',
+    'https://events.mapbox.com'
+];
+const fontSrcUrls = [];
+const imgSrcUrls = [
+    `https://res.cloudinary.com/${process.env.CLOUDINARY_CLOUD_NAME}/`,
+    'https://images.unsplash.com'
+];
+app.use(helmet.contentSecurityPolicy({
+    directives: {
+        defaultSrc: [],
+        connectSrc: ["'self'", ...connectSrcUrls],
+        scriptSrc: ["'unsafe-inline'", "'self'", ...scriptSrcUrls],
+        styleSrc: ["'self'", "'unsafe-inline'", ...styleSrcUrls],
+        workerSrc: ["'self'", "blob:"],
+        childSrc: ["blob:"],
+        objectSrc: [],
+        imgSrc: ["'self'", 'blob:', 'data:', ...imgSrcUrls],
+        fontSrc: ["'self'", ...fontSrcUrls]
+    }
+}));
 
 // ホームページへのルートの定義
 app.get('/', (req,res) => {
