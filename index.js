@@ -33,8 +33,12 @@ const User = require('./models/user');
 // Expressアプリのインスタンスの作成
 const app = express();
 
+// session情報をmongoDBに保持
+const MongoStore = require('connect-mongo');
+
 // mongoDBへの接続
-mongoose.connect('mongodb://localhost:27017/yelp-camp',
+const dbUrl = process.env.DB_URL || 'mongodb://localhost:27017/yelp-camp';
+mongoose.connect(dbUrl,
     { 
         useNewUrlParser: true,
         useUnifiedTopology: true, 
@@ -67,10 +71,25 @@ app.use(methodOverride('_method'));
 // 静的ファイルの提供
 app.use(express.static(path.join(__dirname, 'public')));
 
+const store = MongoStore.create({
+    mongoUrl: dbUrl,
+    // cryptオプションはconnect-mongo v4では使えない
+    // crypto: {
+    //     secret: 'mysecret'
+    // },
+    touchAfter: 24 * 3600 // time period in seconds
+});
+
+store.on('error', e => {
+    console.log('セッションストアエラー', e);
+});
+
 // セッションの設定
+const secret = process.env.SECRET || 'mysecret';
 const sessionConfig = {
+    store,
     name: 'session',
-    secret: 'mysecret',
+    secret: secret,
     resave: 'false',
     saveUninitialized: true,
     cookie: {
