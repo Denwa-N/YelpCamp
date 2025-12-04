@@ -193,6 +193,7 @@ app.use((err, req, res, next) => {
 });
 
 // サーバの起動
-app.listen(3000, () => {
-    console.log('ポート3000でリクエストを受付中・・・');
+const port = process.env.PORT || 3000
+app.listen(port, () => {
+    console.log(`ポート${port}でリクエストを受付中・・・`);
 });
